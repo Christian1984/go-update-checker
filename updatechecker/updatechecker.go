@@ -23,7 +23,6 @@ type GithubApiResponseData struct {
 	Version     string `json:"tag_name"`
 	Name        string `json:"name"`
 	Description string `json:"body"`
-	PreRelease  bool   `json:"prerelease"`
 }
 
 func processError(err error, verbose bool) {
@@ -92,16 +91,25 @@ func loadFile(filename string, verbose bool) (CheckData, error) {
 	return latestCheck, nil
 }
 
-func writeLatestCheckFile(checkData CheckData) error {
-	//fmt.Println(checkData)
-	//TODO: write file
+func writeLatestCheckFile(checkData CheckData, verbose bool) error {
+	file, jsonErr := json.Marshal(checkData)
+	if jsonErr != nil {
+		processError(jsonErr, verbose)
+		return jsonErr
+	}
+
+	fileErr := ioutil.WriteFile(Filename, file, 0644)
+	if fileErr != nil {
+		processError(fileErr, verbose)
+		return fileErr
+	}
 
 	return nil
 }
 
 func hasLatestVersion(currentVersion string, availableVersion string) bool {
 	//TODO
-	return true
+	return false
 }
 
 func canCheck(latestCheckTimestamp string, minIntervalDays int) bool {
@@ -109,17 +117,32 @@ func canCheck(latestCheckTimestamp string, minIntervalDays int) bool {
 	return true
 }
 
-func printUpdateMessage(checkData CheckData) {
-	fmt.Println("A new Update is available...")
-	//TODO
+func printUpdateMessage(checkData CheckData, owner string, repo string) {
+	fmt.Println("==========================================")
+	fmt.Println("=== INFO: A new update is available... ===")
+	fmt.Println()
+	fmt.Println("Version: " + checkData.Version)
+	fmt.Println()
+	fmt.Println("Title: " + checkData.Name)
+	fmt.Println()
+	fmt.Println("Description:")
+	fmt.Println(checkData.Description)
+	fmt.Println()
+	fmt.Println("Download the latest version here:")
+	fmt.Println("https://github.com/" + owner + "/" + repo + "/releases")
+	fmt.Println("==========================================")
+	fmt.Println()
 }
 
 func IsUpdateAvailable(owner string, repo string, currentVersion string, minDaysInterval int, verbose bool) bool {
-	fmt.Println("CheckForUpdate called...")
-
 	latestCheck, fileErr := loadFile(Filename, verbose)
 	if fileErr != nil {
 		//return false
+	}
+
+	if verbose {
+		fmt.Println("Returned from loadFile():")
+		fmt.Println(latestCheck)
 	}
 
 	if canCheck(latestCheck.Timestamp, minDaysInterval) {
@@ -133,14 +156,16 @@ func IsUpdateAvailable(owner string, repo string, currentVersion string, minDays
 			latestCheck.Name = apiResponse.Name
 			latestCheck.Description = apiResponse.Description
 
-			writeLatestCheckFile(latestCheck)
+			writeLatestCheckFile(latestCheck, verbose)
 		}
+	} else if verbose {
+		fmt.Println("Didn't request GitHub API because interval isn't over yet...")
 	}
 
 	if hasLatestVersion(currentVersion, latestCheck.Version) {
 		return false
 	}
 
-	printUpdateMessage(latestCheck)
+	printUpdateMessage(latestCheck, owner, repo)
 	return true
 }
