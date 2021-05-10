@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"net/http"
 	"os"
 	"time"
 )
@@ -22,7 +23,7 @@ type GithubApiResponseData struct {
 	Version     string `json:"tag_name"`
 	Name        string `json:"name"`
 	Description string `json:"body"`
-	PreRelease  string `json:"prerelease"`
+	PreRelease  bool   `json:"prerelease"`
 }
 
 func processError(err error, verbose bool) {
@@ -37,7 +38,33 @@ func requestLatest(owner string, repo string, verbose bool) (GithubApiResponseDa
 	// call https://api.github.com/repos/{owner}/{repo}/releases/latest
 	var apiResponse GithubApiResponseData
 
-	//TODO
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+
+	resp, requestErr := client.Get("https://api.github.com/repos/" + owner + "/" + repo + "/releases/latest")
+
+	if requestErr != nil {
+		processError(requestErr, verbose)
+		return apiResponse, requestErr
+	}
+
+	body, ioUtilErr := ioutil.ReadAll(resp.Body)
+	if ioUtilErr != nil {
+		processError(ioUtilErr, verbose)
+		return apiResponse, ioUtilErr
+	}
+
+	jsonErr := json.Unmarshal(body, &apiResponse)
+	if jsonErr != nil {
+		processError(jsonErr, verbose)
+		return apiResponse, jsonErr
+	}
+
+	if verbose {
+		fmt.Println("GitHub API Response:")
+		fmt.Println(apiResponse)
+	}
 
 	return apiResponse, nil
 }
@@ -66,7 +93,7 @@ func loadFile(filename string, verbose bool) (CheckData, error) {
 }
 
 func writeLatestCheckFile(checkData CheckData) error {
-	fmt.Println(checkData)
+	//fmt.Println(checkData)
 	//TODO: write file
 
 	return nil
@@ -92,14 +119,12 @@ func IsUpdateAvailable(owner string, repo string, currentVersion string, minDays
 
 	latestCheck, fileErr := loadFile(Filename, verbose)
 	if fileErr != nil {
-		return false
+		//return false
 	}
 
 	if canCheck(latestCheck.Timestamp, minDaysInterval) {
 		apiResponse, apiErr := requestLatest(owner, repo, verbose)
 		if apiErr == nil {
-			fmt.Println(apiResponse)
-
 			now := time.Now()
 			snow := now.Format(DateFormat)
 
