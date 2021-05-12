@@ -1,4 +1,4 @@
-module christian1984-updatechecker
+module github.com/Christian1984/go-update-checker
 
 go 1.14
 
