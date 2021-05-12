@@ -1,4 +1,4 @@
-package goupdatechecker
+package updatechecker
 
 import (
 	"encoding/json"
