@@ -43,7 +43,7 @@ func New(owner string, repo string, software string, downloadLink string, minDay
 	return uc
 }
 
-func (uc updateChecker) processError(err error) {
+func (uc *updateChecker) processError(err error) {
 	if !uc.Verbose {
 		return
 	}
@@ -51,7 +51,7 @@ func (uc updateChecker) processError(err error) {
 	fmt.Println("ERROR: " + err.Error())
 }
 
-func (uc updateChecker) requestLatest() (GithubApiResponseData, error) {
+func (uc *updateChecker) requestLatest() (GithubApiResponseData, error) {
 	// call https://api.github.com/repos/{uc.Owner}/{uc.Repo}/releases/latest
 	var apiResponse GithubApiResponseData
 
@@ -86,7 +86,7 @@ func (uc updateChecker) requestLatest() (GithubApiResponseData, error) {
 	return apiResponse, nil
 }
 
-func (uc updateChecker) loadFile() (CheckData, error) {
+func (uc *updateChecker) loadFile() (CheckData, error) {
 	var latestCheck CheckData
 
 	file, err := os.Open(Filename)
@@ -109,7 +109,7 @@ func (uc updateChecker) loadFile() (CheckData, error) {
 	return latestCheck, nil
 }
 
-func (uc updateChecker) writeLatestCheckFile(checkData CheckData) error {
+func (uc *updateChecker) writeLatestCheckFile(checkData CheckData) error {
 	file, jsonErr := json.Marshal(checkData)
 	if jsonErr != nil {
 		uc.processError(jsonErr)
@@ -125,7 +125,7 @@ func (uc updateChecker) writeLatestCheckFile(checkData CheckData) error {
 	return nil
 }
 
-func (uc updateChecker) canCheck(latestCheckTimestamp string) bool {
+func (uc *updateChecker) canCheck(latestCheckTimestamp string) bool {
 	now := time.Now().UTC()
 	lastCheck, timeErr := time.Parse(DateFormat, latestCheckTimestamp)
 
@@ -156,7 +156,7 @@ func (uc updateChecker) canCheck(latestCheckTimestamp string) bool {
 	return false
 }
 
-func (uc updateChecker) updateAvailableMessage(checkData CheckData) string {
+func (uc *updateChecker) updateAvailableMessage(checkData CheckData) string {
 	s := "=== INFO: A new update is available for " + uc.Software + " ==="
 	bars := strings.Repeat("=", len(s))
 
@@ -182,7 +182,7 @@ func (uc updateChecker) updateAvailableMessage(checkData CheckData) string {
 		bars + "\n"
 }
 
-func (uc updateChecker) noUpdateAvailableMessage(checkData CheckData) string {
+func (uc *updateChecker) noUpdateAvailableMessage(checkData CheckData) string {
 	s := "=== INFO: You are running the latestest Version of " + uc.Software + " ==="
 	bars := strings.Repeat("=", len(s))
 
@@ -192,11 +192,11 @@ func (uc updateChecker) noUpdateAvailableMessage(checkData CheckData) string {
 		bars + "\n"
 }
 
-func (uc updateChecker) printMessage() {
+func (uc *updateChecker) PrintMessage() {
 	fmt.Println(uc.Message)
 }
 
-func (uc updateChecker) isCurrentVersionOutdated(currentVersion string, availableVersion string) bool {
+func (uc *updateChecker) isCurrentVersionOutdated(currentVersion string, availableVersion string) bool {
 	if uc.Verbose {
 		fmt.Printf("Comparing current Version %s and available version %s\n", currentVersion, availableVersion)
 	}
@@ -222,7 +222,7 @@ func (uc updateChecker) isCurrentVersionOutdated(currentVersion string, availabl
 	return currOutdated
 }
 
-func (uc updateChecker) CheckForUpdate(currentVersion string) {
+func (uc *updateChecker) CheckForUpdate(currentVersion string) {
 	latestCheck, fileErr := uc.loadFile()
 	if fileErr != nil {
 		//return false
@@ -257,6 +257,4 @@ func (uc updateChecker) CheckForUpdate(currentVersion string) {
 	} else {
 		uc.Message = uc.noUpdateAvailableMessage(latestCheck)
 	}
-
-	uc.printMessage()
 }

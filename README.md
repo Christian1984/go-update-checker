@@ -24,30 +24,33 @@ import (
 func main() {
     uc := updatechecker.New("Christian1984", "go-update-checker", "Go Update Checker", "", 0, true, false)
     uc.CheckForUpdate("0.0.1")
-
+    uc.PrintMessage()
     /*
     =============================================================
     === INFO: A new update is available for Go Update Checker ===
 
-    Version: 0.1.0
+    Version: 0.0.2
 
-    Title: Go Update Checker - 0.1.0 - Initial Release
+    Title: Go Update Checker - 0.0.2
 
     Description:
-    Initial Release
+    Changed receivers to pointer receivers
 
 
     Download the latest version here:
-    https://github.com/Christian1984/vfrmap-for-vr/releases
+    https://github.com/Christian1984/go-update-checker/releases
     =============================================================
     */
 
-    uc.CheckForUpdate("1.0.0")
+    uc.CheckForUpdate("0.0.2")
+    uc.PrintMessage()
     /*
     ========================================================================
     === INFO: You are running the latestest Version of Go Update Checker ===
     ========================================================================
     */
+
+    /* alternatively use uc.Message (type string) in any other context */
 }
 ```
 
