@@ -34,12 +34,12 @@ type updateChecker struct {
 	Software        string
 	DownloadLink    string
 	MinDaysInterval int
-	Force           bool
 	Verbose         bool
+	Message         string
 }
 
-func New(owner string, repo string, software string, downloadLink string, minDaysInterval int, force bool, verbose bool) updateChecker {
-	uc := updateChecker{owner, repo, software, downloadLink, minDaysInterval, force, verbose}
+func New(owner string, repo string, software string, downloadLink string, minDaysInterval int, verbose bool) updateChecker {
+	uc := updateChecker{owner, repo, software, downloadLink, minDaysInterval, verbose, ""}
 	return uc
 }
 
@@ -156,7 +156,7 @@ func (uc updateChecker) canCheck(latestCheckTimestamp string) bool {
 	return false
 }
 
-func (uc updateChecker) printUpdateMessage(checkData CheckData) {
+func (uc updateChecker) updateAvailableMessage(checkData CheckData) string {
 	s := "=== INFO: A new update is available for " + uc.Software + " ==="
 	bars := strings.Repeat("=", len(s))
 
@@ -165,32 +165,35 @@ func (uc updateChecker) printUpdateMessage(checkData CheckData) {
 		link = "https://github.com/" + uc.Owner + "/" + uc.Repo + "/releases"
 	}
 
-	fmt.Println()
-	fmt.Println(bars)
-	fmt.Println(s)
-	fmt.Println()
-	fmt.Println("Version: " + checkData.Version)
-	fmt.Println()
-	fmt.Println("Title: " + checkData.Name)
-	fmt.Println()
-	fmt.Println("Description:")
-	fmt.Println(checkData.Description)
-	fmt.Println()
-	fmt.Println("Download the latest version here:")
-	fmt.Println(link)
-	fmt.Println(bars)
-	fmt.Println()
+	return "\n" +
+		bars + "\n" +
+		s + "\n" +
+		bars + "\n" +
+		"\n" +
+		"Version: " + checkData.Version + "\n" +
+		"\n" +
+		"Title: " + checkData.Name + "\n" +
+		"\n" +
+		"Description:\n" +
+		checkData.Description + "\n" +
+		"\n" +
+		"Download the latest version here:\n" +
+		link + "\n" +
+		bars + "\n"
 }
 
-func (uc updateChecker) printNoUpdateMessage() {
+func (uc updateChecker) noUpdateAvailableMessage(checkData CheckData) string {
 	s := "=== INFO: You are running the latestest Version of " + uc.Software + " ==="
 	bars := strings.Repeat("=", len(s))
 
-	fmt.Println()
-	fmt.Println(bars)
-	fmt.Println(s)
-	fmt.Println(bars)
-	fmt.Println()
+	return "\n" +
+		bars + "\n" +
+		s + "\n" +
+		bars + "\n"
+}
+
+func (uc updateChecker) printMessage() {
+	fmt.Println(uc.Message)
 }
 
 func (uc updateChecker) isCurrentVersionOutdated(currentVersion string, availableVersion string) bool {
@@ -230,7 +233,7 @@ func (uc updateChecker) CheckForUpdate(currentVersion string) {
 		fmt.Println(latestCheck)
 	}
 
-	if uc.Force || uc.canCheck(latestCheck.Timestamp) {
+	if uc.canCheck(latestCheck.Timestamp) {
 		apiResponse, apiErr := uc.requestLatest()
 		if apiErr == nil {
 			now := time.Now()
@@ -250,8 +253,10 @@ func (uc updateChecker) CheckForUpdate(currentVersion string) {
 	}
 
 	if uc.isCurrentVersionOutdated(currentVersion, latestCheck.Version) {
-		uc.printUpdateMessage(latestCheck)
+		uc.Message = uc.updateAvailableMessage(latestCheck)
 	} else {
-		uc.printNoUpdateMessage()
+		uc.Message = uc.noUpdateAvailableMessage(latestCheck)
 	}
+
+	uc.printMessage()
 }
