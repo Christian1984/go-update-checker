@@ -36,10 +36,11 @@ type updateChecker struct {
 	MinDaysInterval int
 	Verbose         bool
 	Message         string
+	UpdateAvailable bool
 }
 
 func New(owner string, repo string, software string, downloadLink string, minDaysInterval int, verbose bool) updateChecker {
-	uc := updateChecker{owner, repo, software, downloadLink, minDaysInterval, verbose, ""}
+	uc := updateChecker{owner, repo, software, downloadLink, minDaysInterval, verbose, "", false}
 	return uc
 }
 
@@ -165,8 +166,7 @@ func (uc *updateChecker) updateAvailableMessage(checkData CheckData) string {
 		link = "https://github.com/" + uc.Owner + "/" + uc.Repo + "/releases"
 	}
 
-	return "\n" +
-		bars + "\n" +
+	return bars + "\n" +
 		s + "\n" +
 		bars + "\n" +
 		"\n" +
@@ -179,17 +179,14 @@ func (uc *updateChecker) updateAvailableMessage(checkData CheckData) string {
 		"\n" +
 		"Download the latest version here:\n" +
 		link + "\n" +
-		bars + "\n"
+		bars
 }
 
 func (uc *updateChecker) noUpdateAvailableMessage(checkData CheckData) string {
 	s := "=== INFO: You are running the latestest Version of " + uc.Software + " ==="
 	bars := strings.Repeat("=", len(s))
 
-	return "\n" +
-		bars + "\n" +
-		s + "\n" +
-		bars + "\n"
+	return bars + "\n" + s + "\n" + bars
 }
 
 func (uc *updateChecker) PrintMessage() {
@@ -254,6 +251,7 @@ func (uc *updateChecker) CheckForUpdate(currentVersion string) {
 
 	if uc.isCurrentVersionOutdated(currentVersion, latestCheck.Version) {
 		uc.Message = uc.updateAvailableMessage(latestCheck)
+		uc.UpdateAvailable = true
 	} else {
 		uc.Message = uc.noUpdateAvailableMessage(latestCheck)
 	}
